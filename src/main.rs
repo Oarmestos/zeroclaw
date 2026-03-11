@@ -133,7 +133,6 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// Initialize your workspace and configuration
     Onboard {
         /// Run the full interactive wizard (default is quick setup)
         #[arg(long)]
@@ -314,13 +313,13 @@ Examples:
   zeroclaw cron update <task-id> --expression '0 8 * * *' --tz Europe/London")]
     Cron {
         #[command(subcommand)]
-        cron_command: CronCommands,
+        cron_command: Box<CronCommands>,
     },
 
     /// Manage provider model catalogs
     Models {
         #[command(subcommand)]
-        model_command: ModelCommands,
+        model_command: Box<ModelCommands>,
     },
 
     /// List supported AI providers
@@ -342,31 +341,31 @@ Examples:
   zeroclaw channel bind-telegram zeroclaw_user")]
     Channel {
         #[command(subcommand)]
-        channel_command: ChannelCommands,
+        channel_command: Box<ChannelCommands>,
     },
 
     /// Browse 50+ integrations
     Integrations {
         #[command(subcommand)]
-        integration_command: IntegrationCommands,
+        integration_command: Box<IntegrationCommands>,
     },
 
     /// Manage skills (user-defined capabilities)
     Skills {
         #[command(subcommand)]
-        skill_command: SkillCommands,
+        skill_command: Box<SkillCommands>,
     },
 
     /// Migrate data from other agent runtimes
     Migrate {
         #[command(subcommand)]
-        migrate_command: MigrateCommands,
+        migrate_command: Box<MigrateCommands>,
     },
 
     /// Manage provider subscription authentication profiles
     Auth {
         #[command(subcommand)]
-        auth_command: AuthCommands,
+        auth_command: Box<AuthCommands>,
     },
 
     /// Discover and introspect USB hardware
@@ -383,7 +382,7 @@ Examples:
   zeroclaw hardware info --chip STM32F401RETx")]
     Hardware {
         #[command(subcommand)]
-        hardware_command: zeroclaw::HardwareCommands,
+        hardware_command: Box<zeroclaw::HardwareCommands>,
     },
 
     /// Manage hardware peripherals (STM32, RPi GPIO, etc.)
@@ -402,7 +401,7 @@ Examples:
   zeroclaw peripheral flash-nucleo")]
     Peripheral {
         #[command(subcommand)]
-        peripheral_command: zeroclaw::PeripheralCommands,
+        peripheral_command: Box<zeroclaw::PeripheralCommands>,
     },
 
     /// Manage agent memory (list, get, stats, clear)
@@ -421,7 +420,7 @@ Examples:
   zeroclaw memory clear --category conversation --yes")]
     Memory {
         #[command(subcommand)]
-        memory_command: MemoryCommands,
+        memory_command: Box<MemoryCommands>,
     },
 
     /// Manage configuration
@@ -437,7 +436,7 @@ Examples:
   zeroclaw config schema > schema.json")]
     Config {
         #[command(subcommand)]
-        config_command: ConfigCommands,
+        config_command: Box<ConfigCommands>,
     },
 
     /// Generate shell completion script to stdout
@@ -910,9 +909,9 @@ async fn main() -> Result<()> {
             tools,
         } => handle_estop_command(&config, estop_command, level, domains, tools),
 
-        Commands::Cron { cron_command } => cron::handle_command(cron_command, &config),
+        Commands::Cron { cron_command } => cron::handle_command(*cron_command, &config),
 
-        Commands::Models { model_command } => match model_command {
+        Commands::Models { model_command } => match *model_command {
             ModelCommands::Refresh {
                 provider,
                 all,
@@ -995,7 +994,7 @@ async fn main() -> Result<()> {
             None => doctor::run(&config),
         },
 
-        Commands::Channel { channel_command } => match channel_command {
+        Commands::Channel { channel_command } => match *channel_command {
             ChannelCommands::Start => channels::start_channels(config).await,
             ChannelCommands::Doctor => channels::doctor_channels(config).await,
             other => channels::handle_command(other, &config).await,
@@ -1003,29 +1002,29 @@ async fn main() -> Result<()> {
 
         Commands::Integrations {
             integration_command,
-        } => integrations::handle_command(integration_command, &config),
+        } => integrations::handle_command(*integration_command, &config),
 
-        Commands::Skills { skill_command } => skills::handle_command(skill_command, &config),
+        Commands::Skills { skill_command } => skills::handle_command(*skill_command, &config),
 
         Commands::Migrate { migrate_command } => {
-            migration::handle_command(migrate_command, &config).await
+            migration::handle_command(*migrate_command, &config).await
         }
 
         Commands::Memory { memory_command } => {
-            memory::cli::handle_command(memory_command, &config).await
+            memory::cli::handle_command(*memory_command, &config).await
         }
 
-        Commands::Auth { auth_command } => handle_auth_command(auth_command, &config).await,
+        Commands::Auth { auth_command } => handle_auth_command(*auth_command, &config).await,
 
         Commands::Hardware { hardware_command } => {
-            hardware::handle_command(hardware_command.clone(), &config)
+            hardware::handle_command(*hardware_command, &config)
         }
 
         Commands::Peripheral { peripheral_command } => {
-            peripherals::handle_command(peripheral_command.clone(), &config).await
+            peripherals::handle_command(*peripheral_command, &config).await
         }
 
-        Commands::Config { config_command } => match config_command {
+        Commands::Config { config_command } => match *config_command {
             ConfigCommands::Schema => {
                 let schema = schemars::schema_for!(config::Config);
                 println!(

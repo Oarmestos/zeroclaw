@@ -1,3 +1,11 @@
+# Windows: usar rust-lld como linker en lugar del linker MSVC por defecto.
+# rust-lld es el linker de LLVM y es significativamente más rápido para proyectos grandes.
+# No afecta el binario final, solo mejora el tiempo de linking en dev.
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld"
+# Aumentar el stack a 16MB (16777216 bytes) para evitar stack overflow en Windows con structs grandes como Config/Commands.
+rustflags = ["-C", "link-arg=/STACK:16777216"]
+
 [target.x86_64-unknown-linux-musl]
 rustflags = ["-C", "link-arg=-static"]
 

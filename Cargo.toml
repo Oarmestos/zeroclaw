@@ -228,6 +228,22 @@ codegen-units = 1
 strip = true
 panic = "abort"
 
+# Optimización de velocidad de compilación en modo desarrollo.
+# Estas opciones NO afectan el binario de release ni el comportamiento en runtime.
+[profile.dev]
+split-debuginfo = "unpacked"  # Información de debug más rápida en Windows
+incremental = true            # Compilación incremental (ya es default, lo dejamos explícito)
+
+# Compilar dependencias externas con opt-level=1.
+# Reduce tiempo de compilación inicial sin perder información de debug del código propio.
+[profile.dev.package."*"]
+opt-level = 1
+
+# Compilar build scripts (ej: rusqlite bundled, ring) con opt-level=3.
+# Los build scripts no van al binario; compilarlos más optimizados los hace correr más rápido.
+[profile.dev.build-override]
+opt-level = 3
+
 [dev-dependencies]
 tempfile = "3.14"
 criterion = { version = "0.8", features = ["async_tokio"] }
